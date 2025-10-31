@@ -1,0 +1,14 @@
+[
+  {"id": 1, "presente": "Jogo de Panelas", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 2, "presente": "Jogo de Taças de Cristal", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 3, "presente": "Edredom de Seda", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 4, "presente": "Jogo de Toalhas Bordadas", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 5, "presente": "Cafeteira Nespresso", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 6, "presente": "Liquidificador Philips Walita", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 7, "presente": "Aparelho de Jantar Porcelana", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 8, "presente": "Aspirador de Pó Robô", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 9, "presente": "Jogo de Facas Profissional", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 10, "presente": "Mixer KitchenAid", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 11, "presente": "Conjunto de Travessas", "disponivel": true, "convidado": "", "data": ""},
+  {"id": 12, "presente": "Difusor de Aromas", "disponivel": true, "convidado": "", "data": ""}
+]

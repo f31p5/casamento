@@ -370,38 +370,87 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        // Dados dos presentes (simulando leitura do CSV)
-        let presentes = [
-            {id: 1, presente: 'Jogo de Panelas', disponivel: true, convidado: '', data: ''},
-            {id: 2, presente: 'Jogo de Taças de Cristal', disponivel: true, convidado: '', data: ''},
-            {id: 3, presente: 'Edredom de Seda', disponivel: true, convidado: '', data: ''},
-            {id: 4, presente: 'Jogo de Toalhas Bordadas', disponivel: true, convidado: '', data: ''},
-            {id: 5, presente: 'Cafeteira Nespresso', disponivel: true, convidado: '', data: ''},
-            {id: 6, presente: 'Liquidificador Philips Walita', disponivel: true, convidado: '', data: ''},
-            {id: 7, presente: 'Aparelho de Jantar Porcelana', disponivel: true, convidado: '', data: ''},
-            {id: 8, presente: 'Aspirador de Pó Robô', disponivel: true, convidado: '', data: ''},
-            {id: 9, presente: 'Jogo de Facas Profissional', disponivel: true, convidado: '', data: ''},
-            {id: 10, presente: 'Mixer KitchenAid', disponivel: true, convidado: '', data: ''},
-            {id: 11, presente: 'Conjunto de Travessas', disponivel: true, convidado: '', data: ''},
-            {id: 12, presente: 'Difusor de Aromas', disponivel: true, convidado: '', data: ''}
-        ];
+    <!-- GitHub Sync Configuration -->
+    <script src="config.js"></script>
+    <script src="github-sync.js"></script>
 
+    <script>
+        // Variáveis globais
+        let presentes = [];
         let selectedGiftId = null;
         let guestName = '';
+        let sync = null;
 
-        // Carregar presentes do localStorage se existir
-        function loadPresentes() {
-            const stored = localStorage.getItem('presentesChaCasamento');
-            if (stored) {
-                presentes = JSON.parse(stored);
+        // Inicializar sincronização com GitHub
+        async function initSync() {
+            sync = initGitHubSync();
+
+            if (sync && isGitHubConfigured()) {
+                console.log('🔄 Sincronizando com GitHub...');
+                await loadPresentes();
+
+                // Atualizar a cada 10 segundos para ver mudanças de outros usuários
+                setInterval(loadPresentes, 10000);
+            } else {
+                console.warn('⚠️ GitHub não configurado, usando apenas localStorage');
+                await loadPresentes();
             }
-            displayPresentes();
         }
 
-        // Salvar presentes no localStorage
-        function savePresentes() {
-            localStorage.setItem('presentesChaCasamento', JSON.stringify(presentes));
+        // Carregar presentes do GitHub ou localStorage
+        async function loadPresentes() {
+            try {
+                if (sync && isGitHubConfigured()) {
+                    // Carregar do GitHub
+                    presentes = await sync.sync();
+                } else {
+                    // Fallback para localStorage
+                    const stored = localStorage.getItem('presentesChaCasamento');
+                    if (stored) {
+                        presentes = JSON.parse(stored);
+                    } else {
+                        // Dados iniciais se não houver nada
+                        presentes = [
+                            {id: 1, presente: 'Jogo de Panelas', disponivel: true, convidado: '', data: ''},
+                            {id: 2, presente: 'Jogo de Taças de Cristal', disponivel: true, convidado: '', data: ''},
+                            {id: 3, presente: 'Edredom de Seda', disponivel: true, convidado: '', data: ''},
+                            {id: 4, presente: 'Jogo de Toalhas Bordadas', disponivel: true, convidado: '', data: ''},
+                            {id: 5, presente: 'Cafeteira Nespresso', disponivel: true, convidado: '', data: ''},
+                            {id: 6, presente: 'Liquidificador Philips Walita', disponivel: true, convidado: '', data: ''},
+                            {id: 7, presente: 'Aparelho de Jantar Porcelana', disponivel: true, convidado: '', data: ''},
+                            {id: 8, presente: 'Aspirador de Pó Robô', disponivel: true, convidado: '', data: ''},
+                            {id: 9, presente: 'Jogo de Facas Profissional', disponivel: true, convidado: '', data: ''},
+                            {id: 10, presente: 'Mixer KitchenAid', disponivel: true, convidado: '', data: ''},
+                            {id: 11, presente: 'Conjunto de Travessas', disponivel: true, convidado: '', data: ''},
+                            {id: 12, presente: 'Difusor de Aromas', disponivel: true, convidado: '', data: ''}
+                        ];
+                        localStorage.setItem('presentesChaCasamento', JSON.stringify(presentes));
+                    }
+                }
+                displayPresentes();
+            } catch (error) {
+                console.error('Erro ao carregar presentes:', error);
+            }
+        }
+
+        // Salvar presentes no GitHub e localStorage
+        async function savePresentes() {
+            try {
+                if (sync && isGitHubConfigured()) {
+                    // Salvar no GitHub
+                    const success = await sync.updateAndSync(presentes);
+                    if (!success) {
+                        console.warn('⚠️ Não foi possível salvar no GitHub, mas foi salvo localmente');
+                    }
+                } else {
+                    // Salvar apenas no localStorage
+                    localStorage.setItem('presentesChaCasamento', JSON.stringify(presentes));
+                }
+            } catch (error) {
+                console.error('Erro ao salvar presentes:', error);
+                // Sempre salvar no localStorage como backup
+                localStorage.setItem('presentesChaCasamento', JSON.stringify(presentes));
+            }
         }
 
         // Exibir presentes disponíveis
@@ -447,20 +496,29 @@
         }
 
         // Confirmar presente
-        function confirmGift() {
+        async function confirmGift() {
             const presente = presentes.find(p => p.id === selectedGiftId);
-            
+
             if (!presente.disponivel) {
                 alert('Este presente já foi escolhido por outra pessoa.');
                 goBack();
                 return;
             }
 
+            // Mostrar mensagem de processamento
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Confirmando...';
+            btn.disabled = true;
+
             presente.disponivel = false;
             presente.convidado = guestName;
             presente.data = new Date().toLocaleString('pt-BR');
 
-            savePresentes();
+            await savePresentes();
+
+            btn.textContent = originalText;
+            btn.disabled = false;
 
             document.getElementById('thankYouName').textContent = guestName;
             showPage('page3');
@@ -482,8 +540,8 @@
             document.getElementById(pageId).classList.add('active');
         }
 
-        // Carregar presentes ao iniciar
-        loadPresentes();
+        // Inicializar sistema ao carregar a página
+        initSync();
     </script>
 </body>
 </html>
